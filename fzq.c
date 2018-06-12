@@ -8,18 +8,26 @@ int mouse(int*);//传递鼠标坐标与状态
 void initmap(void);
 void fontsize(int,int);
 void luozi(char [][15],int*,char);
-int evaluate(char [][15],int[],char,int);
-int lianxu(char m[][15],int luoz[],char,int,int);
+int evaluate(char [][15],int[],char);
+int lianxu(char m[][15],int luoz[]);
+int lianxufen(int liann);
+
+int mscore=0;
 
 int main(void){
 	char map[15][15];
 	int cursor[2]={3,10};//提示你在点哪里的光标 
+	char nowcolor='b';
 	memset(map,48,sizeof(map));
 	initmap();
 	while(1)
 	{
 		luozi(map,cursor,'b');
-		
+		Pos(0,0);
+		printf("  %d  ",mscore);
+		luozi(map,cursor,'w');
+		Pos(0,0);
+		printf("  %d  ",mscore);
 		
 	}
 	return 0;
@@ -137,8 +145,17 @@ void luozi(char m[][15],int* gb,char ccolor){
 			if(m[cs[0]-3][(cs[1]-10)/2]=='0'&&cs[0]<=17&&cs[0]>=3&&cs[1]<=38&&cs[1]>=10)
 			{
 				Pos(cs[0],cs[1]);
-				printf("●");
-				m[cs[0]-3][(cs[1]-10)/2]=ccolor;
+				if(ccolor=='b')
+				{
+					printf("○");
+				}
+				else if(ccolor=='w')
+				{
+					printf("●");
+				}
+				cs[0]-=3;
+				cs[1]=(cs[1]-10)/2;
+				mscore+=evaluate(m,cs,ccolor);
 				return;
 			}
 		}
@@ -172,43 +189,149 @@ void luozi(char m[][15],int* gb,char ccolor){
 				gb[1]=cs[1];
 				Pos(cs[0],cs[1]);
 				printf("□");
-				return;
+				continue;
 			}
 		}
 	}
 }
-int evaluate(char m[][15],int luoz[],char ccolor,int oldScore){//'0'是空,'b'是黑,'w'是白,活1 10，100,1000,10000,100000，死降一级 
-	int liann[8];
-	liann[0]=lianxu(m,luoz,ccolor,0,1);
-	liann[1]=lianxu(m,luoz,ccolor,-1,1);
-	liann[2]=lianxu(m,luoz,ccolor,-1,0);
-	liann[3]=lianxu(m,luoz,ccolor,-1,-1);
-	liann[4]=lianxu(m,luoz,ccolor,0,-1);
-	liann[5]=lianxu(m,luoz,ccolor,1,-1);
-	liann[6]=lianxu(m,luoz,ccolor,1,0);
-	liann[7]=lianxu(m,luoz,ccolor,1,1);
-	
-	
-	return 0;
+int evaluate(char m[][15],int luoz[],char ccolor){//'0'是空,'b'是黑,'w'是白,活1 10，100,1000,10000,100000，死降一级 
+	int boscore,bnscore;
+	char yuan=m[luoz[0]][luoz[1]];
+	boscore=lianxu(m,luoz);
+	m[luoz[0]][luoz[1]]=ccolor;
+	bnscore=lianxu(m,luoz);
+	return bnscore-boscore;
 }
-int lianxu(char m[][15],int luoz[],char ccolor,int y,int x){
+int lianxu(char m[][15],int luoz[]){
 	int i;
-	int liann=1;
-	char lianc;
-	if((lianc=m[luoz[0]+y][luoz[1]+x])!='0')
+	int liann[4]={0,0,0,0};//分别为水平，y=-x，竖直，y=x 
+	int life[4]={1,1,1,1};
+	int oscore=0; 
+	char lianc[4]={'0','0','0','0'};
+	for(i=(luoz[1]-5>=0?-5:-luoz[1]);i<(15-luoz[1]>6?6:15-luoz[1]);i++)
 	{
-		for(i=2;i++;(i<5&&luoz[0]+y*i<=14&&luoz[0]+y*i>=0&&luoz[1]+x*i<=14&&luoz[1]+x*i>=0))
+		if(lianc[0]!='0'&&m[luoz[0]][luoz[1]+i]==lianc[0])
 		{
-			if(m[luoz[0]+i*y][luoz[0]+i*x]==lianc)
+			liann[0]++;
+			if(liann[0]>=5)
 			{
-				liann++;
+				return 999999;
+			}
+		}
+		else
+		{
+			if(lianc[0]=='0')
+			{
+				life[0]=1;
+				if(m[luoz[0]][luoz[1]+i]=='0')
+				{
+					liann[0]=0;
+				}
+				else
+				{
+					liann[0]=1;
+				}
 			}
 			else
 			{
-				break;
+				if(m[luoz[0]][luoz[1]+i]=='0')
+				{
+					if(life[0]==0)//单死降一级 
+					{
+						liann[0]--;
+					}
+					oscore+=(lianc[0]=='b'?1:-1)*lianxufen(liann[0]);
+					liann[0]=0;
+					life[0]=1;
+				}
+				else
+				{
+					if(life[0]==0)//双死没有分 
+					{
+						liann[0]=0;
+					}
+					else//单死降一级
+					{
+						liann[0]--;
+					}
+					oscore+=(lianc[0]=='b'?1:-1)*lianxufen(liann[0]);
+					liann[0]=1;
+					life[0]=0;
+				}
 			}
 		}
-		return lianc==ccolor?liann:-liann;
+		lianc[0]=m[luoz[0]][luoz[1]+i];
+	}//未完成 
+	for(i=((luoz[0]-5>=0&&luoz[1]-5>=0)?-5:-(luoz[0]<luoz[1]?luoz[0]:luozi[1]));i<(15-luoz[1]>6?6:15-luoz[1]);i++)
+	{
+		if(lianc[0]!='0'&&m[luoz[0]][luoz[1]+i]==lianc[0])
+		{
+			liann[0]++;
+			if(liann[0]>=5)
+			{
+				return 999999;
+			}
+		}
+		else
+		{
+			if(lianc[0]=='0')
+			{
+				life[0]=1;
+				if(m[luoz[0]][luoz[1]+i]=='0')
+				{
+					liann[0]=0;
+				}
+				else
+				{
+					liann[0]=1;
+				}
+			}
+			else
+			{
+				if(m[luoz[0]][luoz[1]+i]=='0')
+				{
+					if(life[0]==0)//单死降一级 
+					{
+						liann[0]--;
+					}
+					oscore+=(lianc[0]=='b'?1:-1)*lianxufen(liann[0]);
+					liann[0]=0;
+					life[0]=1;
+				}
+				else
+				{
+					if(life[0]==0)//双死没有分 
+					{
+						liann[0]=0;
+					}
+					else//单死降一级
+					{
+						liann[0]--;
+					}
+					oscore+=(lianc[0]=='b'?1:-1)*lianxufen(liann[0]);
+					liann[0]=1;
+					life[0]=0;
+				}
+			}
+		}
+		lianc[0]=m[luoz[0]][luoz[1]+i];
 	}
-	return 0;
+	return oscore;
+}
+int lianxufen(int liann){
+	switch(liann)
+	{
+		case 1:
+			return 1;
+		case 2:
+			return 10;
+		case 3:
+			return 100;
+		case 4:
+			return 1000;
+		case 5://好像没有什么意义 
+			return 10000;
+		default:
+			return 0;
+	}
 }
