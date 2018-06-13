@@ -2,8 +2,13 @@
 #include <windows.h>
 #include <conio.h>
 #include <stdbool.h> 
+typedef struct alterchess{
+	int posit[2];
+	int spscore;
+	struct alterchess *next;
+}alter;
 
-void Pos(int,int);//是x坐标已经乘了2的版本 
+void Pos(int,int);
 int mouse(int*);//传递鼠标坐标与状态 
 void initmap(void);
 void fontsize(int,int);
@@ -11,6 +16,12 @@ void luozi(char [][15],int*,char);
 int evaluate(char [][15],int[],char);
 int lianxu(char m[][15],int luoz[]);
 int lianxufen(int liann);
+int computer(char [][15],char,int,int);
+alter* generate(char [][15]);
+int manzu(char [][15],int,int);
+alter* add(alter*,int,int);
+void quzhi(alter*);
+void freeall(alter*);
 
 int mscore=0;
 
@@ -28,7 +39,6 @@ int main(void){
 		luozi(map,cursor,'w');
 		Pos(0,0);
 		printf("  %d  ",mscore);
-		
 	}
 	return 0;
 }
@@ -156,6 +166,7 @@ void luozi(char m[][15],int* gb,char ccolor){
 				cs[0]-=3;
 				cs[1]=(cs[1]-10)/2;
 				mscore+=evaluate(m,cs,ccolor);
+				m[cs[0]][cs[1]]=ccolor;
 				return;
 			}
 		}
@@ -196,10 +207,10 @@ void luozi(char m[][15],int* gb,char ccolor){
 }
 int evaluate(char m[][15],int luoz[],char ccolor){//'0'是空,'b'是黑,'w'是白,活1 10，100,1000,10000,100000，死降一级 
 	int boscore,bnscore;
-	char yuan=m[luoz[0]][luoz[1]];
 	boscore=lianxu(m,luoz);
 	m[luoz[0]][luoz[1]]=ccolor;
 	bnscore=lianxu(m,luoz);
+	m[luoz[0]][luoz[1]]='0';
 	return bnscore-boscore;
 }
 int lianxu(char m[][15],int luoz[]){
@@ -486,5 +497,69 @@ int lianxufen(int liann){
 			return 10000;
 		default:
 			return 0;
+	}
+}
+int computer(char m[][15],char ccolor,int score,int depth){
+			
+}
+alter* generate(char m[][15]){
+	int i,j;
+	alter *head=(alter*)malloc(sizeof(alter));
+	alter *p=head;
+	for(i=0;i<15;i++)
+	{
+		for(j=0;j<15;j++)
+		{
+			if(manzu(m,i,j))
+			{
+				p=add(p,i,j);
+			}
+		}
+	}
+	return head; 
+}
+int manzu(char m[][15],int l1,int l2){
+	if(m[l1][l2]=='0')
+	{
+		int i,j;
+		for(i=(l1>=2?-2:-l1);l1+i<15&&i<=2;i++)
+		{
+			for(j=(l2>=2?-2:-l2);l2+j<15&&j<=2;j++)
+			{
+				if(m[l1+i][l2+j]!='0')
+				{
+					return 1;
+				}
+			}
+		}
+	}
+	return 0;
+}
+alter* add(alter* yend,int pos0,int pos1){
+	alter* newend;
+	newend=(alter*)malloc(sizeof(alter));
+	yend->next=newend;
+	newend->posit[0]=pos0;
+	newend->posit[1]=pos1;
+	newend->next=NULL;
+	return newend;
+}
+void quzhi(alter* head){
+	alter *p1=head->next;
+	while(p1!=NULL)
+	{
+		Pos(p1->posit[0]+3,(p1->posit[1]+5)*2);
+		printf("□");
+		p1=p1->next;
+	}
+	freeall(head);
+}
+void freeall(alter* head){
+	alter *p1=head,*p2=p1;
+	while(p2!=NULL)
+	{
+		p2=p2->next;
+		free(p1);
+		p1=p2;
 	}
 }
