@@ -203,14 +203,17 @@ int evaluate(char m[][15],int luoz[],char ccolor){//'0'是空,'b'是黑,'w'是白,活1 
 	return bnscore-boscore;
 }
 int lianxu(char m[][15],int luoz[]){
-	int i;
-	int liann[4]={0,0,0,0};//分别为水平，y=-x，竖直，y=x 
+	int i,min,max;
+	int liann[4]={0,0,0,0}; 
 	int life[4]={1,1,1,1};
 	int oscore=0; 
 	char lianc[4]={'0','0','0','0'};
-	for(i=(luoz[1]-5>=0?-5:-luoz[1]);i<(15-luoz[1]>6?6:15-luoz[1]);i++)
+/*————————————————————————————————————————*/
+	min=(luoz[1]-5>=0?-5:-luoz[1]);
+	max=(15-luoz[1]>6?6:15-luoz[1]);
+	for(i=min;i<max;i++)
 	{
-		if(lianc[0]!='0'&&m[luoz[0]][luoz[1]+i]==lianc[0])
+		if(liann[0]!=0&&m[luoz[0]][luoz[1]+i]==lianc[0])
 		{
 			liann[0]++;
 			if(liann[0]>=5)
@@ -220,12 +223,15 @@ int lianxu(char m[][15],int luoz[]){
 		}
 		else
 		{
-			if(lianc[0]=='0')
+			if((luoz[1]+i)==0)
 			{
-				life[0]=1;
+				life[0]--;
+			}
+			if(liann[0]==0)
+			{
 				if(m[luoz[0]][luoz[1]+i]=='0')
 				{
-					liann[0]=0;
+					life[0]=1;
 				}
 				else
 				{
@@ -260,62 +266,209 @@ int lianxu(char m[][15],int luoz[]){
 				}
 			}
 		}
-		lianc[0]=m[luoz[0]][luoz[1]+i];
-	}//未完成 
-	for(i=((luoz[0]-5>=0&&luoz[1]-5>=0)?-5:-(luoz[0]<luoz[1]?luoz[0]:luozi[1]));i<(15-luoz[1]>6?6:15-luoz[1]);i++)
-	{
-		if(lianc[0]!='0'&&m[luoz[0]][luoz[1]+i]==lianc[0])
-		{
-			liann[0]++;
-			if(liann[0]>=5)
-			{
-				return 999999;
-			}
-		}
-		else
-		{
-			if(lianc[0]=='0')
-			{
-				life[0]=1;
-				if(m[luoz[0]][luoz[1]+i]=='0')
-				{
-					liann[0]=0;
-				}
-				else
-				{
-					liann[0]=1;
-				}
-			}
-			else
-			{
-				if(m[luoz[0]][luoz[1]+i]=='0')
-				{
-					if(life[0]==0)//单死降一级 
-					{
-						liann[0]--;
-					}
-					oscore+=(lianc[0]=='b'?1:-1)*lianxufen(liann[0]);
-					liann[0]=0;
-					life[0]=1;
-				}
-				else
-				{
-					if(life[0]==0)//双死没有分 
-					{
-						liann[0]=0;
-					}
-					else//单死降一级
-					{
-						liann[0]--;
-					}
-					oscore+=(lianc[0]=='b'?1:-1)*lianxufen(liann[0]);
-					liann[0]=1;
-					life[0]=0;
-				}
-			}
-		}
-		lianc[0]=m[luoz[0]][luoz[1]+i];
+		lianc[0]=m[luoz[0]][luoz[1]+i];	
 	}
+	if((luoz[1]+i)==15&&life[0]==1)
+	{
+		liann[0]--;
+		oscore+=(lianc[0]=='b'?1:-1)*lianxufen(liann[0]);
+	}
+/*——————————————————上面是水平————————————————————*/ 
+	min=(luoz[0]-5>=0?-5:-luoz[0]);
+	max=(15-luoz[0]>6?6:15-luoz[0]);
+	for(i=min;i<max;i++)
+	{
+		if(liann[1]!=0&&m[luoz[0]+i][luoz[1]]==lianc[1])
+		{
+			liann[1]++;
+			if(liann[1]>=5)
+			{
+				return 999999;
+			}
+		}
+		else
+		{
+			if((luoz[0]+i)==0)
+			{
+				life[1]--;
+			}
+			if(liann[1]==0)
+			{
+				if(m[luoz[0]+i][luoz[1]]=='0')
+				{
+					life[1]=1;
+				}
+				else
+				{
+					liann[1]=1;
+				}
+			}
+			else
+			{
+				if(m[luoz[0]+i][luoz[1]]=='0')
+				{
+					if(life[1]==0)//单死降一级 
+					{
+						liann[1]--;
+					}
+					oscore+=(lianc[1]=='b'?1:-1)*lianxufen(liann[1]);
+					liann[1]=0;
+					life[1]=1;
+				}
+				else
+				{
+					if(life[1]==0)//双死没有分 
+					{
+						liann[1]=0;
+					}
+					else//单死降一级
+					{
+						liann[1]--;
+					}
+					oscore+=(lianc[1]=='b'?1:-1)*lianxufen(liann[1]);
+					liann[1]=1;
+					life[1]=0;
+				}
+			}
+		}
+		lianc[1]=m[luoz[0]+i][luoz[1]];	
+	}
+	if((luoz[0]+i)==15&&life[1]==1)
+	{
+		liann[1]--;
+		oscore+=(lianc[1]=='b'?1:-1)*lianxufen(liann[1]);
+	}
+/*——————————————————上面是竖直————————————————————*/
+	min=((luoz[0]-5>=0&&luoz[1]-5>=0)?-5:-(luoz[0]<luoz[1]?luoz[0]:luoz[1]));
+	max=((15-luoz[1]>6&&15-luoz[0]>6)?6:((15-luoz[0]<15-luoz[1])?15-luoz[0]:15-luoz[1]));
+	for(i=min;i<max;i++)
+	{
+		if(liann[2]!=0&&m[luoz[0]+i][luoz[1]+i]==lianc[2])
+		{
+			liann[2]++;
+			if(liann[2]>=5)
+			{
+				return 999999;
+			}
+		}
+		else
+		{
+			if((luoz[0]+i)==0||(luoz[1]+i)==0)
+			{
+				life[2]--;
+			}
+			if(liann[2]==0)
+			{
+				if(m[luoz[0]+i][luoz[1]+i]=='0')
+				{
+					life[2]=1;
+				}
+				else
+				{
+					liann[2]=1;
+				}
+			}
+			else
+			{
+				if(m[luoz[0]+i][luoz[1]+i]=='0')
+				{
+					if(life[2]==0)//单死降一级 
+					{
+						liann[2]--;
+					}
+					oscore+=(lianc[2]=='b'?1:-1)*lianxufen(liann[2]);
+					liann[2]=0;
+					life[2]=1;
+				}
+				else
+				{
+					if(life[2]==0)//双死没有分 
+					{
+						liann[2]=0;
+					}
+					else//单死降一级
+					{
+						liann[2]--;
+					}
+					oscore+=(lianc[2]=='b'?1:-1)*lianxufen(liann[2]);
+					liann[2]=1;
+					life[2]=0;
+				}
+			}
+		}
+		lianc[2]=m[luoz[0]+i][luoz[1]+i];	
+	}
+	if(((luoz[0]+i==15)||(luoz[1]+i==15))&&life[2]==1)
+	{
+		liann[2]--;
+		oscore+=(lianc[2]=='b'?1:-1)*lianxufen(liann[2]);
+	}
+/*——————————————————上面是135斜的————————————————————*/
+	min=(15-luoz[0]>5&&luoz[1]-5>=0)?-5:-(14-luoz[0]<luoz[1]?14-luoz[0]:luoz[1]);			
+	max=(15-luoz[1]>6&&luoz[0]-5>=0)?6:((luoz[0]+1<15-luoz[1])?luoz[0]+1:15-luoz[1]);
+	for(i=min;i<max;i++)
+	{
+		if(liann[3]!=0&&m[luoz[0]-i][luoz[1]+i]==lianc[3])
+		{
+			liann[3]++;
+			if(liann[3]>=5)
+			{
+				return 999999;
+			}
+		}
+		else
+		{
+			if((luoz[0]-i)==14||(luoz[1]+i)==0)
+			{
+				life[3]--;
+			}
+			if(liann[3]==0)
+			{
+				if(m[luoz[0]-i][luoz[1]+i]=='0')
+				{
+					life[3]=1;
+				}
+				else
+				{
+					liann[3]=1;
+				}
+			}
+			else
+			{
+				if(m[luoz[0]-i][luoz[1]+i]=='0')
+				{
+					if(life[3]==0)//单死降一级 
+					{
+						liann[3]--;
+					}
+					oscore+=(lianc[3]=='b'?1:-1)*lianxufen(liann[3]);
+					liann[3]=0;
+					life[3]=1;
+				}
+				else
+				{
+					if(life[3]==0)//双死没有分 
+					{
+						liann[3]=0;
+					}
+					else//单死降一级
+					{
+						liann[3]--;
+					}
+					oscore+=(lianc[3]=='b'?1:-1)*lianxufen(liann[3]);
+					liann[3]=1;
+					life[3]=0;
+				}
+			}
+		}
+		lianc[3]=m[luoz[0]-i][luoz[1]+i];	
+	}
+	if(((luoz[0]-i==-1)||(luoz[1]+i==15))&&life[3]==1)
+	{
+		liann[3]--;
+		oscore+=(lianc[3]=='b'?1:-1)*lianxufen(liann[3]);
+	}
+/*——————————————————上面是45斜的————————————————————*/ 
 	return oscore;
 }
 int lianxufen(int liann){
