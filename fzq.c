@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <windows.h>
 #include <conio.h>
-#include <stdbool.h> 
+#include <stdbool.h>
+#define MAXDEPTH 2
 typedef struct alterchess{
 	int posit[2];
-	int spscore;
 	struct alterchess *next;
 }alter;
 
@@ -22,8 +22,10 @@ int manzu(char [][15],int,int);
 alter* add(alter*,int,int);
 void quzhi(alter*);
 void freeall(alter*);
+int is_end(void);
 
 int mscore=0;
+int end=0;
 
 int main(void){
 	char map[15][15];
@@ -36,9 +38,17 @@ int main(void){
 		luozi(map,cursor,'b');
 		Pos(0,0);
 		printf("  %d  ",mscore);
-		luozi(map,cursor,'w');
+		if(is_end())
+		{
+			break;
+		}
+		computer(map,'w',mscore,1);
 		Pos(0,0);
 		printf("  %d  ",mscore);
+		if(is_end())
+		{
+			break;
+		}
 	}
 	return 0;
 }
@@ -219,6 +229,7 @@ int lianxu(char m[][15],int luoz[]){
 	int life[4]={1,1,1,1};
 	int oscore=0; 
 	char lianc[4]={'0','0','0','0'};
+	end=0;
 /*¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª*/
 	min=(luoz[1]-5>=0?-5:-luoz[1]);
 	max=(15-luoz[1]>6?6:15-luoz[1]);
@@ -229,7 +240,17 @@ int lianxu(char m[][15],int luoz[]){
 			liann[0]++;
 			if(liann[0]>=5)
 			{
-				return 999999;
+				if(m[luoz[0]][luoz[1]]=='b')
+				{
+					end=1;
+					return 999999;
+				}
+				else if(m[luoz[0]][luoz[1]]=='w')
+				{	
+					end=-1;
+					return -999999;
+				}
+				
 			}
 		}
 		else
@@ -294,7 +315,16 @@ int lianxu(char m[][15],int luoz[]){
 			liann[1]++;
 			if(liann[1]>=5)
 			{
-				return 999999;
+				if(m[luoz[0]][luoz[1]]=='b')
+				{
+					end=1;
+					return 999999;
+				}
+				else if(m[luoz[0]][luoz[1]]=='w')
+				{	
+					end=-1;
+					return -999999;
+				}
 			}
 		}
 		else
@@ -359,7 +389,16 @@ int lianxu(char m[][15],int luoz[]){
 			liann[2]++;
 			if(liann[2]>=5)
 			{
-				return 999999;
+			if(m[luoz[0]][luoz[1]]=='b')
+				{
+					end=1;
+					return 999999;
+				}
+				else if(m[luoz[0]][luoz[1]]=='w')
+				{	
+					end=-1;
+					return -999999;
+				}
 			}
 		}
 		else
@@ -424,7 +463,16 @@ int lianxu(char m[][15],int luoz[]){
 			liann[3]++;
 			if(liann[3]>=5)
 			{
-				return 999999;
+				if(m[luoz[0]][luoz[1]]=='b')
+				{
+					end=1;
+					return 999999;
+				}
+				else if(m[luoz[0]][luoz[1]]=='w')
+				{	
+					end=-1;
+					return -999999;
+				}
 			}
 		}
 		else
@@ -500,7 +548,106 @@ int lianxufen(int liann){
 	}
 }
 int computer(char m[][15],char ccolor,int score,int depth){
-			
+	alter* head,*p;
+	int jivalve,zanvalve,nscore;
+	head=generate(m);
+	p=head->next;
+	if(depth==MAXDEPTH)
+	{
+		if(depth%2==0)
+		{
+			jivalve=-999999;
+			while(p!=NULL)
+			{
+				zanvalve=score+evaluate(m,p->posit,ccolor);
+				if(jivalve<zanvalve)
+				{
+					jivalve=zanvalve;
+				}
+				p=p->next;
+			}
+		}
+		else
+		{
+			jivalve=999999;
+			while(p!=NULL)
+			{
+				zanvalve=score+evaluate(m,p->posit,ccolor);
+				if(jivalve>zanvalve)
+				{
+					jivalve=zanvalve;
+				}
+				p=p->next;
+			}
+		}
+	}
+	else if(depth==1)
+	{
+		int bestpos[2]={0,0};//ÁôÒ»ÊÖ(£þ¨Œ£þ)~*
+		jivalve=999999;
+		while(p!=NULL)
+		{
+			nscore=score+evaluate(m,p->posit,ccolor);
+			m[p->posit[0]][p->posit[1]]=ccolor;
+			zanvalve=computer(m,ccolor=='b'?'w':'b',nscore,depth+1);
+			m[p->posit[0]][p->posit[1]]='0';
+			if(jivalve>zanvalve)
+			{
+				jivalve=zanvalve;
+				bestpos[0]=p->posit[0];
+				bestpos[1]=p->posit[1]; 
+			}
+			p=p->next;
+		}
+		mscore=score+evaluate(m,bestpos,ccolor);
+		m[bestpos[0]][bestpos[1]]=ccolor;
+		Pos(bestpos[0]+3,2*bestpos[1]+10);
+		if(ccolor=='b')
+		{
+			printf("¡ð");
+		}
+		else if(ccolor=='w')
+		{
+			printf("¡ñ");
+		}
+	}
+	else
+	{
+		if(depth%2==0)
+		{
+			jivalve=-999999;
+			while(p!=NULL)
+			{
+				nscore=score+evaluate(m,p->posit,ccolor);
+				m[p->posit[0]][p->posit[1]]=ccolor;
+				zanvalve=computer(m,ccolor=='b'?'w':'b',nscore,depth+1);
+				m[p->posit[0]][p->posit[1]]='0';
+				if(jivalve<zanvalve)
+				{
+					jivalve=zanvalve;
+				}
+				p=p->next;
+			}
+		}
+		else
+		{
+			jivalve=999999;
+			while(p!=NULL)
+			{
+				nscore=score+evaluate(m,p->posit,ccolor);
+				m[p->posit[0]][p->posit[1]]=ccolor;
+				zanvalve=computer(m,ccolor=='b'?'w':'b',nscore,depth+1);
+				m[p->posit[0]][p->posit[1]]='0';
+				if(jivalve>zanvalve)
+				{
+					jivalve=zanvalve;
+				}
+				p=p->next;
+			}
+		}
+	}
+	freeall(head);
+	return jivalve;		
 }
 alter* generate(char m[][15]){
 	int i,j;
@@ -562,4 +709,17 @@ void freeall(alter* head){
 		free(p1);
 		p1=p2;
 	}
+}
+int is_end(void){
+	if(end==1)
+	{
+		printf("ºÚÆå»ñÊ¤£¡£¡£¡");
+		return 1; 
+	}
+	else if(end==-1)
+	{
+		printf("°×Æå»ñÊ¤£¡£¡£¡");
+		return 1;
+	}
+	return 0;
 }
