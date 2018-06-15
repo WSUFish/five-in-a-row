@@ -3,6 +3,8 @@
 #include <conio.h>
 #include <stdbool.h>
 #define MAXDEPTH 2
+#define BLACK 1
+#define WHITE -1
 typedef struct alterchess{
 	int posit[2];
 	struct alterchess *next;
@@ -15,7 +17,7 @@ void fontsize(int,int);
 void luozi(char [][15],int*,char);
 int evaluate(char [][15],int[],char);
 int lianxu(char m[][15],int luoz[]);
-int lianxufen(int liann);
+int lianxufen(char ,int liann);
 int computer(char [][15],char,int,int);
 alter* generate(char [][15]);
 int manzu(char [][15],int,int);
@@ -26,6 +28,8 @@ int is_end(void);
 
 int mscore=0;
 int end=0;
+int jiaosha=0;
+int shuangsan[2]={0,0};
 
 int main(void){
 	char map[15][15];
@@ -158,6 +162,7 @@ void fontsize(int x,int y){
 }
 void luozi(char m[][15],int* gb,char ccolor){
 	int cs[2];
+	int jiaosha_xiuzheng;
 	while(1)
 	{
 		if(mouse(cs))
@@ -175,7 +180,9 @@ void luozi(char m[][15],int* gb,char ccolor){
 				}
 				cs[0]-=3;
 				cs[1]=(cs[1]-10)/2;
+				jiaosha_xiuzheng=jiaosha;//此两处是因为我把判断叫杀的功能放在了人机公用的打分函数中......日后应该想办法加以避免 
 				mscore+=evaluate(m,cs,ccolor);
+				jiaosha=jiaosha_xiuzheng;// --------- 
 				m[cs[0]][cs[1]]=ccolor;
 				return;
 			}
@@ -230,6 +237,9 @@ int lianxu(char m[][15],int luoz[]){
 	int oscore=0; 
 	char lianc[4]={'0','0','0','0'};
 	end=0;
+	jiaosha=0;
+	shuangsan[0]=0;
+	shuangsan[1]=0;
 /*————————————————————————————————————————*/
 	min=(luoz[1]-5>=0?-5:-luoz[1]);
 	max=(15-luoz[1]>6?6:15-luoz[1]);
@@ -243,11 +253,13 @@ int lianxu(char m[][15],int luoz[]){
 				if(m[luoz[0]][luoz[1]]=='b')
 				{
 					end=1;
+					jiaosha=BLACK;
 					return 999999;
 				}
 				else if(m[luoz[0]][luoz[1]]=='w')
 				{	
 					end=-1;
+					jiaosha=WHITE;
 					return -999999;
 				}
 				
@@ -278,7 +290,7 @@ int lianxu(char m[][15],int luoz[]){
 					{
 						liann[0]--;
 					}
-					oscore+=(lianc[0]=='b'?1:-1)*lianxufen(liann[0]);
+					oscore+=lianxufen(lianc[0],liann[0]);
 					liann[0]=0;
 					life[0]=1;
 				}
@@ -292,7 +304,7 @@ int lianxu(char m[][15],int luoz[]){
 					{
 						liann[0]--;
 					}
-					oscore+=(lianc[0]=='b'?1:-1)*lianxufen(liann[0]);
+					oscore+=lianxufen(lianc[0],liann[0]);
 					liann[0]=1;
 					life[0]=0;
 				}
@@ -303,7 +315,7 @@ int lianxu(char m[][15],int luoz[]){
 	if((luoz[1]+i)==15&&life[0]==1)
 	{
 		liann[0]--;
-		oscore+=(lianc[0]=='b'?1:-1)*lianxufen(liann[0]);
+		oscore+=lianxufen(lianc[0],liann[0]);
 	}
 /*——————————————————上面是水平————————————————————*/ 
 	min=(luoz[0]-5>=0?-5:-luoz[0]);
@@ -352,7 +364,7 @@ int lianxu(char m[][15],int luoz[]){
 					{
 						liann[1]--;
 					}
-					oscore+=(lianc[1]=='b'?1:-1)*lianxufen(liann[1]);
+					oscore+=lianxufen(lianc[1],liann[1]);
 					liann[1]=0;
 					life[1]=1;
 				}
@@ -366,7 +378,7 @@ int lianxu(char m[][15],int luoz[]){
 					{
 						liann[1]--;
 					}
-					oscore+=(lianc[1]=='b'?1:-1)*lianxufen(liann[1]);
+					oscore+=lianxufen(lianc[1],liann[1]);
 					liann[1]=1;
 					life[1]=0;
 				}
@@ -377,7 +389,7 @@ int lianxu(char m[][15],int luoz[]){
 	if((luoz[0]+i)==15&&life[1]==1)
 	{
 		liann[1]--;
-		oscore+=(lianc[1]=='b'?1:-1)*lianxufen(liann[1]);
+		oscore+=lianxufen(lianc[1],liann[1]);
 	}
 /*——————————————————上面是竖直————————————————————*/
 	min=((luoz[0]-5>=0&&luoz[1]-5>=0)?-5:-(luoz[0]<luoz[1]?luoz[0]:luoz[1]));
@@ -426,7 +438,7 @@ int lianxu(char m[][15],int luoz[]){
 					{
 						liann[2]--;
 					}
-					oscore+=(lianc[2]=='b'?1:-1)*lianxufen(liann[2]);
+					oscore+=lianxufen(lianc[2],liann[2]);
 					liann[2]=0;
 					life[2]=1;
 				}
@@ -440,7 +452,7 @@ int lianxu(char m[][15],int luoz[]){
 					{
 						liann[2]--;
 					}
-					oscore+=(lianc[2]=='b'?1:-1)*lianxufen(liann[2]);
+					oscore+=lianxufen(lianc[2],liann[2]);
 					liann[2]=1;
 					life[2]=0;
 				}
@@ -451,7 +463,7 @@ int lianxu(char m[][15],int luoz[]){
 	if(((luoz[0]+i==15)||(luoz[1]+i==15))&&life[2]==1)
 	{
 		liann[2]--;
-		oscore+=(lianc[2]=='b'?1:-1)*lianxufen(liann[2]);
+		oscore+=lianxufen(lianc[2],liann[2]);
 	}
 /*——————————————————上面是135斜的————————————————————*/
 	min=(15-luoz[0]>5&&luoz[1]-5>=0)?-5:-(14-luoz[0]<luoz[1]?14-luoz[0]:luoz[1]);			
@@ -500,7 +512,7 @@ int lianxu(char m[][15],int luoz[]){
 					{
 						liann[3]--;
 					}
-					oscore+=(lianc[3]=='b'?1:-1)*lianxufen(liann[3]);
+					oscore+=lianxufen(lianc[3],liann[3]);
 					liann[3]=0;
 					life[3]=1;
 				}
@@ -514,7 +526,7 @@ int lianxu(char m[][15],int luoz[]){
 					{
 						liann[3]--;
 					}
-					oscore+=(lianc[3]=='b'?1:-1)*lianxufen(liann[3]);
+					oscore+=lianxufen(lianc[3],liann[3]);
 					liann[3]=1;
 					life[3]=0;
 				}
@@ -525,24 +537,43 @@ int lianxu(char m[][15],int luoz[]){
 	if(((luoz[0]-i==-1)||(luoz[1]+i==15))&&life[3]==1)
 	{
 		liann[3]--;
-		oscore+=(lianc[3]=='b'?1:-1)*lianxufen(liann[3]);
+		oscore+=lianxufen(lianc[3],liann[3]);
 	}
 /*——————————————————上面是45斜的————————————————————*/ 
 	return oscore;
 }
-int lianxufen(int liann){
+int lianxufen(char ccolor,int liann){
+	int i=ccolor=='b'?1:-1;
 	switch(liann)
 	{
 		case 1:
-			return 1;
+			return 1*i;
 		case 2:
-			return 10;
+			return 10*i;
 		case 3:
-			return 100;
+			if(i==1)
+			{
+				shuangsan[0]++;
+			}
+			else
+			{
+				shuangsan[1]++;
+			}
+			if(shuangsan[0]==2)
+			{
+				jiaosha=BLACK;
+			}
+			else if(shuangsan[1]==2)
+			{
+				jiaosha=WHITE;
+			}
+			return 100*i;
 		case 4:
-			return 1000;
+			jiaosha=ccolor=='b'?BLACK:WHITE;
+			return 1000*i;
 		case 5://好像没有什么意义 
-			return 10000;
+			jiaosha=1;
+			return 10000*i;
 		default:
 			return 0;
 	}
@@ -554,7 +585,8 @@ int computer(char m[][15],char ccolor,int score,int depth){
 	p=head->next;
 	if(depth==MAXDEPTH)
 	{
-		if(depth%2==0)
+		int jijiaosha=0;
+		if(ccolor=='b')
 		{
 			jivalve=-999999;
 			while(p!=NULL)
@@ -562,6 +594,7 @@ int computer(char m[][15],char ccolor,int score,int depth){
 				zanvalve=score+evaluate(m,p->posit,ccolor);
 				if(jivalve<zanvalve)
 				{
+					jijiaosha=jiaosha;
 					jivalve=zanvalve;
 				}
 				p=p->next;
@@ -575,53 +608,139 @@ int computer(char m[][15],char ccolor,int score,int depth){
 				zanvalve=score+evaluate(m,p->posit,ccolor);
 				if(jivalve>zanvalve)
 				{
+					jijiaosha=jiaosha;
 					jivalve=zanvalve;
 				}
 				p=p->next;
 			}
 		}
+		jiaosha=jijiaosha;
 	}
 	else if(depth==1)
 	{
 		int bestpos[2]={0,0};//留一手(￣▽￣)~*
-		jivalve=999999;
-		while(p!=NULL)
+		if(ccolor=='w')
 		{
-			nscore=score+evaluate(m,p->posit,ccolor);
-			m[p->posit[0]][p->posit[1]]=ccolor;
-			zanvalve=computer(m,ccolor=='b'?'w':'b',nscore,depth+1);
-			m[p->posit[0]][p->posit[1]]='0';
-			if(jivalve>zanvalve)
+			if(jiaosha==WHITE)
 			{
-				jivalve=zanvalve;
-				bestpos[0]=p->posit[0];
-				bestpos[1]=p->posit[1]; 
+				while(p!=NULL)
+				{
+					evaluate(m,p->posit,ccolor);
+					if(end==-1)
+					{
+						bestpos[0]=p->posit[0];
+						bestpos[1]=p->posit[1];
+						break; 
+					}
+					p=p->next;
+				}
 			}
-			p=p->next;
-		}
-		mscore=score+evaluate(m,bestpos,ccolor);
-		m[bestpos[0]][bestpos[1]]=ccolor;
-		Pos(bestpos[0]+3,2*bestpos[1]+10);
-		if(ccolor=='b')
-		{
-			printf("○");
-		}
-		else if(ccolor=='w')
-		{
+			else
+			{
+				jivalve=999999;
+				while(p!=NULL)
+				{
+					nscore=score+evaluate(m,p->posit,ccolor);
+					if(jiaosha==WHITE)
+					{
+						bestpos[0]=p->posit[0];
+						bestpos[1]=p->posit[1];
+						break;
+					}
+					m[p->posit[0]][p->posit[1]]=ccolor;
+					zanvalve=computer(m,ccolor=='b'?'w':'b',nscore,depth+1);
+					m[p->posit[0]][p->posit[1]]='0';
+					if(jiaosha==WHITE)
+					{
+						bestpos[0]=p->posit[0];
+						bestpos[1]=p->posit[1];
+						break;
+					}
+					if(jivalve>zanvalve)
+					{
+						jivalve=zanvalve;
+						bestpos[0]=p->posit[0];
+						bestpos[1]=p->posit[1]; 
+					}
+					p=p->next;
+				}
+			}
+			mscore=score+evaluate(m,bestpos,ccolor);
+			m[bestpos[0]][bestpos[1]]=ccolor;
+			Pos(bestpos[0]+3,2*bestpos[1]+10);
 			printf("●");
+		}
+		else
+		{
+			if(jiaosha==BLACK)
+			{
+				while(p!=NULL)
+				{
+					evaluate(m,p->posit,ccolor);
+					if(end==1)
+					{
+						bestpos[0]=p->posit[0];
+						bestpos[1]=p->posit[1];
+						break; 
+					}
+					p=p->next;
+				}
+			}
+			else
+			{
+				jivalve=-999999;
+				while(p!=NULL)
+				{
+					nscore=score+evaluate(m,p->posit,ccolor);
+					if(jiaosha==BLACK)
+					{
+						bestpos[0]=p->posit[0];
+						bestpos[1]=p->posit[1];
+						break;
+					}
+					m[p->posit[0]][p->posit[1]]=ccolor;
+					zanvalve=computer(m,ccolor=='b'?'w':'b',nscore,depth+1);
+					m[p->posit[0]][p->posit[1]]='0';
+					if(jiaosha==BLACK)
+					{
+						bestpos[0]=p->posit[0];
+						bestpos[1]=p->posit[1];
+						break;
+					}
+					if(jivalve<zanvalve)
+					{
+						jivalve=zanvalve;
+						bestpos[0]=p->posit[0];
+						bestpos[1]=p->posit[1]; 
+					}
+					p=p->next;
+				}
+			}
+			mscore=score+evaluate(m,bestpos,ccolor);
+			m[bestpos[0]][bestpos[1]]=ccolor;
+			Pos(bestpos[0]+3,2*bestpos[1]+10);
+			printf("○");
 		}
 	}
 	else
 	{
-		if(depth%2==0)
+		if(ccolor=='b')
 		{
 			jivalve=-999999;
 			while(p!=NULL)
 			{
 				nscore=score+evaluate(m,p->posit,ccolor);
+				if(jiaosha==BLACK)
+				{
+					break;
+				}
 				m[p->posit[0]][p->posit[1]]=ccolor;
 				zanvalve=computer(m,ccolor=='b'?'w':'b',nscore,depth+1);
 				m[p->posit[0]][p->posit[1]]='0';
+				if(jiaosha==BLACK)
+				{
+					break;
+				}
 				if(jivalve<zanvalve)
 				{
 					jivalve=zanvalve;
@@ -635,9 +754,17 @@ int computer(char m[][15],char ccolor,int score,int depth){
 			while(p!=NULL)
 			{
 				nscore=score+evaluate(m,p->posit,ccolor);
+				if(jiaosha==WHITE)
+				{
+					break;
+				}
 				m[p->posit[0]][p->posit[1]]=ccolor;
 				zanvalve=computer(m,ccolor=='b'?'w':'b',nscore,depth+1);
 				m[p->posit[0]][p->posit[1]]='0';
+				if(jiaosha==WHITE)
+				{
+					break;
+				}
 				if(jivalve>zanvalve)
 				{
 					jivalve=zanvalve;
@@ -723,3 +850,4 @@ int is_end(void){
 	}
 	return 0;
 }
+
